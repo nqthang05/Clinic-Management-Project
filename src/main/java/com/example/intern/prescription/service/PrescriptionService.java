@@ -1,5 +1,7 @@
 package com.example.intern.prescription.service;
 
+import com.example.intern.exception.AppException;
+import com.example.intern.exception.ErrorCode;
 import com.example.intern.medicalrecord.entity.MedicalRecord;
 import com.example.intern.medicalrecord.repository.MedicalRecordRepository;
 import com.example.intern.medicine.entity.Medicine;
@@ -20,7 +22,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PrescriptionService {
-
     private final PrescriptionRepository prescriptionRepository;
     private final MedicalRecordRepository medicalRecordRepository;
     private final MedicineRepository medicineRepository;
@@ -29,22 +30,18 @@ public class PrescriptionService {
     @Transactional
     public PrescriptionResponse createPrescription(PrescriptionRequest request) {
         MedicalRecord record = medicalRecordRepository.findById(request.getMedicalRecordId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Medical Record ID"));
+                .orElseThrow(() -> new AppException(ErrorCode.MEDICAL_RECORD_NOT_FOUND));
 
-        Prescription prescription = Prescription.builder()
-                .medicalRecord(record)
-                .notes(request.getNotes())
-                .build();
+        Prescription prescription = Prescription.builder().medicalRecord(record).notes(request.getNotes()).build();
 
         for (PrescriptionRequest.PrescriptionItemRequest itemReq : request.getItems()) {
             Medicine medicine = medicineRepository.findById(itemReq.getMedicineId())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy Thuốc ID: " + itemReq.getMedicineId()));
+                    .orElseThrow(() -> new AppException(ErrorCode.MEDICINE_NOT_FOUND));
 
             if (medicine.getStockQuantity() < itemReq.getQuantity()) {
-                throw new RuntimeException("Thuốc " + medicine.getName() + " không đủ số lượng trong kho!");
+                throw new AppException(ErrorCode.MEDICINE_OUT_OF_STOCK); // Dùng chuẩn AppException
             }
 
-            // Trừ số lượng tồn kho
             medicine.setStockQuantity(medicine.getStockQuantity() - itemReq.getQuantity());
             medicineRepository.save(medicine);
 
@@ -60,13 +57,17 @@ public class PrescriptionService {
 
             prescription.getItems().add(item);
         }
-
         return prescriptionMapper.toResponse(prescriptionRepository.save(prescription));
     }
 
     public List<PrescriptionResponse> getAllPrescriptions() {
-        return prescriptionRepository.findAll().stream()
-                .map(prescriptionMapper::toResponse)
-                .collect(Collectors.toList());
+        return prescriptionRepository.findAll().stream().map(prescriptionMapper::toResponse).collect(Collectors.toList());
+    }
+    public PrescriptionResponse updatePrescriptionNotes(Long id, String notes) {
+        Prescription prescription = prescriptionRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.PRESCRIPTION_NOT_FOUND));
+
+        prescription.setNotes(notes);
+        return prescriptionMapper.toResponse(prescriptionRepository.save(prescription));
     }
 }

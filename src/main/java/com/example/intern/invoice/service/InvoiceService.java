@@ -2,6 +2,8 @@ package com.example.intern.invoice.service;
 
 import com.example.intern.appointment.entity.Appointment;
 import com.example.intern.appointment.repository.AppointmentRepository;
+import com.example.intern.exception.AppException;
+import com.example.intern.exception.ErrorCode;
 import com.example.intern.invoice.dto.InvoiceRequest;
 import com.example.intern.invoice.dto.InvoiceResponse;
 import com.example.intern.invoice.entity.Invoice;
@@ -21,7 +23,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class InvoiceService {
-
     private final InvoiceRepository invoiceRepository;
     private final AppointmentRepository appointmentRepository;
     private final MedicineRepository medicineRepository;
@@ -30,10 +31,10 @@ public class InvoiceService {
     @Transactional
     public InvoiceResponse createInvoice(InvoiceRequest request) {
         Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Appointment ID: " + request.getAppointmentId()));
+                .orElseThrow(() -> new AppException(ErrorCode.APPOINTMENT_NOT_FOUND));
 
         if (invoiceRepository.existsByAppointmentId(request.getAppointmentId())) {
-            throw new RuntimeException("Lịch hẹn này đã được xuất hóa đơn!");
+            throw new AppException(ErrorCode.INVOICE_EXISTED);
         }
 
         Invoice invoice = Invoice.builder()
@@ -61,7 +62,6 @@ public class InvoiceService {
 
             BigDecimal lineTotal = itemReq.getUnitPrice().multiply(BigDecimal.valueOf(itemReq.getQuantity()));
             totalAmount = totalAmount.add(lineTotal);
-
             invoice.getItems().add(item);
         }
 
@@ -70,8 +70,19 @@ public class InvoiceService {
     }
 
     public List<InvoiceResponse> getAllInvoices() {
-        return invoiceRepository.findAll().stream()
-                .map(invoiceMapper::toResponse)
-                .collect(Collectors.toList());
+        return invoiceRepository.findAll().stream().map(invoiceMapper::toResponse).collect(Collectors.toList());
+    }
+
+    public InvoiceResponse updateInvoiceStatus(Long id, String status) {
+        Invoice invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.INVOICE_NOT_FOUND));
+
+        if (!status.equals("PAID") && !status.equals("CANCELLED") && !status.equals("UNPAID")) {
+            throw new RuntimeException("Trạng thái hóa đơn không hợp lệ!");
+        }
+
+        // Đánh dấu hóa đơn đã thanh toán
+        invoice.setStatus(status);
+        return invoiceMapper.toResponse(invoiceRepository.save(invoice));
     }
 }

@@ -5,6 +5,8 @@ import com.example.intern.doctor.dto.DoctorResponse;
 import com.example.intern.doctor.entity.Doctor;
 import com.example.intern.doctor.mapper.DoctorMapper;
 import com.example.intern.doctor.repository.DoctorRepository;
+import com.example.intern.exception.AppException;
+import com.example.intern.exception.ErrorCode;
 import com.example.intern.user.entity.User;
 import com.example.intern.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,37 +18,50 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class DoctorService {
-
     private final DoctorRepository doctorRepository;
-    private final UserRepository userRepository; // Inject UserRepository để lấy User
+    private final UserRepository userRepository;
     private final DoctorMapper doctorMapper;
 
     public DoctorResponse createDoctor(DoctorRequest request) {
-        // 1. Kiểm tra User tồn tại không & Role có phải DOCTOR không
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy User với ID: " + request.getUserId()));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        if (!"DOCTOR".equals(user.getRole())) {
-            throw new RuntimeException("Tài khoản này không có quyền DOCTOR");
-        }
-
-        // 2. Kiểm tra User này đã làm bác sĩ chưa
-        if (doctorRepository.existsByUserId(request.getUserId())) {
-            throw new RuntimeException("User này đã được liên kết với một hồ sơ Bác sĩ khác");
-        }
-
-        // 3. Kiểm tra trùng License (Giấy phép)
-        if (doctorRepository.existsByLicenseNumber(request.getLicenseNumber())) {
-            throw new RuntimeException("Số giấy phép hành nghề đã tồn tại");
-        }
+        if (!"DOCTOR".equals(user.getRole())) throw new AppException(ErrorCode.ROLE_INVALID);
+        if (doctorRepository.existsByUserId(request.getUserId())) throw new AppException(ErrorCode.DOCTOR_EXISTED);
+        if (doctorRepository.existsByLicenseNumber(request.getLicenseNumber())) throw new AppException(ErrorCode.LICENSE_EXISTED);
 
         Doctor doctor = doctorMapper.toEntity(request, user);
         return doctorMapper.toResponse(doctorRepository.save(doctor));
     }
 
     public List<DoctorResponse> getAllDoctors() {
-        return doctorRepository.findAll().stream()
-                .map(doctorMapper::toResponse)
-                .collect(Collectors.toList());
+        return doctorRepository.findAll().stream().map(doctorMapper::toResponse).collect(Collectors.toList());
+    }
+    public DoctorResponse updateDoctor(Long id, DoctorRequest request) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
+
+        // Kiểm tra trùng License Number
+        if (!doctor.getLicenseNumber().equals(request.getLicenseNumber())
+                && doctorRepository.existsByLicenseNumber(request.getLicenseNumber())) {
+            throw new AppException(ErrorCode.LICENSE_EXISTED);
+        }
+
+        doctor.setFullName(request.getFullName());
+        doctor.setSpecialty(request.getSpecialty());
+        doctor.setPhone(request.getPhone());
+        doctor.setEmail(request.getEmail());
+        doctor.setLicenseNumber(request.getLicenseNumber());
+
+        return doctorMapper.toResponse(doctorRepository.save(doctor));
+    }
+
+    // Xóa mềm Bác sĩ
+    public void deleteDoctor(Long id) {
+        Doctor doctor = doctorRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.DOCTOR_NOT_FOUND));
+
+        doctor.setStatus("INACTIVE");
+        doctorRepository.save(doctor);
     }
 }

@@ -1,11 +1,11 @@
 package com.example.intern.prescription.controller;
 
+import com.example.intern.common.ApiResponse;
 import com.example.intern.prescription.dto.PrescriptionRequest;
 import com.example.intern.prescription.dto.PrescriptionResponse;
 import com.example.intern.prescription.service.PrescriptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,16 +14,19 @@ import java.util.List;
 @RequestMapping("/api/prescriptions")
 @RequiredArgsConstructor
 public class PrescriptionController {
-
     private final PrescriptionService prescriptionService;
 
     @PostMapping
-    public ResponseEntity<PrescriptionResponse> createPrescription(@Valid @RequestBody PrescriptionRequest request) {
-        return ResponseEntity.ok(prescriptionService.createPrescription(request));
+    public ApiResponse<PrescriptionResponse> createPrescription(@Valid @RequestBody PrescriptionRequest request) {
+        return ApiResponse.<PrescriptionResponse>builder().result(prescriptionService.createPrescription(request)).build();
     }
 
     @GetMapping
-    public ResponseEntity<List<PrescriptionResponse>> getAllPrescriptions() {
-        return ResponseEntity.ok(prescriptionService.getAllPrescriptions());
+    public ApiResponse<List<PrescriptionResponse>> getAllPrescriptions() {
+        return ApiResponse.<List<PrescriptionResponse>>builder().result(prescriptionService.getAllPrescriptions()).build();
+    }
+    @PatchMapping("/{id}/notes")
+    public ApiResponse<PrescriptionResponse> updatePrescriptionNotes(@PathVariable Long id, @RequestParam String notes) {
+        return ApiResponse.<PrescriptionResponse>builder().result(prescriptionService.updatePrescriptionNotes(id, notes)).build();
     }
 }

@@ -3,9 +3,9 @@ package com.example.intern.appointment.controller;
 import com.example.intern.appointment.dto.AppointmentRequest;
 import com.example.intern.appointment.dto.AppointmentResponse;
 import com.example.intern.appointment.service.AppointmentService;
+import com.example.intern.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,16 +14,25 @@ import java.util.List;
 @RequestMapping("/api/appointments")
 @RequiredArgsConstructor
 public class AppointmentController {
-
     private final AppointmentService appointmentService;
 
     @PostMapping
-    public ResponseEntity<AppointmentResponse> createAppointment(@Valid @RequestBody AppointmentRequest request) {
-        return ResponseEntity.ok(appointmentService.createAppointment(request));
+    public ApiResponse<AppointmentResponse> createAppointment(@Valid @RequestBody AppointmentRequest request) {
+        return ApiResponse.<AppointmentResponse>builder().result(appointmentService.createAppointment(request)).build();
     }
 
     @GetMapping
-    public ResponseEntity<List<AppointmentResponse>> getAllAppointments() {
-        return ResponseEntity.ok(appointmentService.getAllAppointments());
+    public ApiResponse<List<AppointmentResponse>> getAllAppointments() {
+        return ApiResponse.<List<AppointmentResponse>>builder().result(appointmentService.getAllAppointments()).build();
+    }
+    @PutMapping("/{id}")
+    public ApiResponse<AppointmentResponse> updateAppointment(@PathVariable Long id, @RequestBody AppointmentRequest request) {
+        return ApiResponse.<AppointmentResponse>builder().result(appointmentService.updateAppointment(id, request)).build();
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ApiResponse<String> cancelAppointment(@PathVariable Long id) {
+        appointmentService.cancelAppointment(id);
+        return ApiResponse.<String>builder().result("Đã hủy lịch hẹn thành công").build();
     }
 }

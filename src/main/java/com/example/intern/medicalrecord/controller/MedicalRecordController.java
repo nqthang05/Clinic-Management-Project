@@ -1,11 +1,11 @@
 package com.example.intern.medicalrecord.controller;
 
+import com.example.intern.common.ApiResponse;
 import com.example.intern.medicalrecord.dto.MedicalRecordRequest;
 import com.example.intern.medicalrecord.dto.MedicalRecordResponse;
 import com.example.intern.medicalrecord.service.MedicalRecordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,16 +14,19 @@ import java.util.List;
 @RequestMapping("/api/medical-records")
 @RequiredArgsConstructor
 public class MedicalRecordController {
-
     private final MedicalRecordService medicalRecordService;
 
     @PostMapping
-    public ResponseEntity<MedicalRecordResponse> createMedicalRecord(@Valid @RequestBody MedicalRecordRequest request) {
-        return ResponseEntity.ok(medicalRecordService.createMedicalRecord(request));
+    public ApiResponse<MedicalRecordResponse> createMedicalRecord(@Valid @RequestBody MedicalRecordRequest request) {
+        return ApiResponse.<MedicalRecordResponse>builder().result(medicalRecordService.createMedicalRecord(request)).build();
     }
 
     @GetMapping
-    public ResponseEntity<List<MedicalRecordResponse>> getAllMedicalRecords() {
-        return ResponseEntity.ok(medicalRecordService.getAllMedicalRecords());
+    public ApiResponse<List<MedicalRecordResponse>> getAllMedicalRecords() {
+        return ApiResponse.<List<MedicalRecordResponse>>builder().result(medicalRecordService.getAllMedicalRecords()).build();
+    }
+    @PutMapping("/{id}")
+    public ApiResponse<MedicalRecordResponse> updateMedicalRecord(@PathVariable Long id, @RequestBody MedicalRecordRequest request) {
+        return ApiResponse.<MedicalRecordResponse>builder().result(medicalRecordService.updateMedicalRecord(id, request)).build();
     }
 }

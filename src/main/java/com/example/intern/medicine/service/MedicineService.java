@@ -1,5 +1,7 @@
 package com.example.intern.medicine.service;
 
+import com.example.intern.exception.AppException;
+import com.example.intern.exception.ErrorCode;
 import com.example.intern.medicine.dto.MedicineRequest;
 import com.example.intern.medicine.dto.MedicineResponse;
 import com.example.intern.medicine.entity.Medicine;
@@ -14,7 +16,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class MedicineService {
-
     private final MedicineRepository medicineRepository;
     private final MedicineMapper medicineMapper;
 
@@ -31,7 +32,29 @@ public class MedicineService {
 
     public MedicineResponse getMedicineById(Long id) {
         Medicine medicine = medicineRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Thuốc ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.MEDICINE_NOT_FOUND));
         return medicineMapper.toResponse(medicine);
+    }
+    public MedicineResponse updateMedicine(Long id, MedicineRequest request) {
+        Medicine medicine = medicineRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.MEDICINE_NOT_FOUND));
+
+        medicine.setName(request.getName());
+        medicine.setActiveIngredient(request.getActiveIngredient());
+        medicine.setUnit(request.getUnit());
+        medicine.setDescription(request.getDescription());
+        medicine.setUnitPrice(request.getUnitPrice());
+        medicine.setStockQuantity(request.getStockQuantity());
+
+        return medicineMapper.toResponse(medicineRepository.save(medicine));
+    }
+
+    // XÓA MỀM (Vô hiệu hóa thuốc)
+    public void deleteMedicine(Long id) {
+        Medicine medicine = medicineRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.MEDICINE_NOT_FOUND));
+
+        medicine.setStatus("INACTIVE");
+        medicineRepository.save(medicine);
     }
 }

@@ -1,10 +1,10 @@
 package com.example.intern.user.controller;
 
+import com.example.intern.common.ApiResponse;
 import com.example.intern.user.dto.UserRequest;
 import com.example.intern.user.dto.UserResponse;
 import com.example.intern.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,17 +17,33 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest request) {
-        return ResponseEntity.ok(userService.createUser(request));
+    public ApiResponse<UserResponse> createUser(@RequestBody UserRequest request) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.createUser(request))
+                .build();
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ApiResponse<List<UserResponse>> getAllUsers() {
+        return ApiResponse.<List<UserResponse>>builder()
+                .result(userService.getAllUsers())
+                .build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+    public ApiResponse<UserResponse> getUserById(@PathVariable Long id) {
+        return ApiResponse.<UserResponse>builder()
+                .result(userService.getUserById(id))
+                .build();
+    }
+    @PutMapping("/{id}")
+    public ApiResponse<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserRequest request) {
+        return ApiResponse.<UserResponse>builder().result(userService.updateUser(id, request)).build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<String> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ApiResponse.<String>builder().result("Vô hiệu hóa tài khoản thành công").build();
     }
 }
