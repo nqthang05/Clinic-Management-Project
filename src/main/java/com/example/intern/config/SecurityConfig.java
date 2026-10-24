@@ -1,31 +1,54 @@
 package com.example.intern.config;
 
+import com.example.intern.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // Cho phép dùng @PreAuthorize ở Controller
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    // Khai báo Bean BCrypt để chích (Inject) vào Service
+    private final JwtAuthenticationFilter jwtAuthFilter;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
     }
 
-    // Tạm thời mở khóa toàn bộ API để test Postman không bị lỗi 401
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Tắt chống giả mạo request (dùng cho API)
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // Cho phép tất cả đi qua
-                );
+                        // API Đăng nhập cho phép tất cả mọi người truy cập
+                        .requestMatchers("/api/auth/login").permitAll()
+
+                        // Mở tạm API tạo User (POST) để bạn tạo tài khoản ban đầu test. Sau này có thể khóa lại chỉ cho ADMIN.
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+
+                        // Phân quyền cơ bản (Ví dụ Admin mới được tạo thuốc)
+                        // .requestMatchers(HttpMethod.POST, "/api/medicines").hasRole("ADMIN")
+
+                        // Tất cả các API còn lại BẮT BUỘC phải có Token hợp lệ
+                        .anyRequest().authenticated()
+                )
+                // Thêm bộ lọc JWT chạy trước bộ lọc UsernamePassword cơ bản
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

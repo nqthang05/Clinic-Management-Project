@@ -29,7 +29,11 @@ public enum ErrorCode {
     // 40xx: Lỗi liên quan đến Database/Ràng buộc
     DATA_IN_USE(4001, "Dữ liệu đang được sử dụng ở nơi khác, không thể xóa cứng", HttpStatus.CONFLICT),
     PRESCRIPTION_NOT_FOUND(3012, "Không tìm thấy đơn thuốc", HttpStatus.NOT_FOUND),
-    INVOICE_NOT_FOUND(3013, "Không tìm thấy hóa đơn", HttpStatus.NOT_FOUND);
+    INVOICE_NOT_FOUND(3013, "Không tìm thấy hóa đơn", HttpStatus.NOT_FOUND),
+    // 50xx: Lỗi xác thực / Phân quyền
+    UNAUTHENTICATED(5001, "Bạn chưa đăng nhập hoặc token không hợp lệ", HttpStatus.UNAUTHORIZED),
+    WRONG_CREDENTIALS(5002, "Sai tên đăng nhập hoặc mật khẩu", HttpStatus.UNAUTHORIZED),
+    ACCESS_DENIED(5003, "Bạn không có quyền truy cập chức năng này", HttpStatus.FORBIDDEN);
 
     private final int code;
     private final String message;
