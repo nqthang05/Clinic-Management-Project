@@ -4,11 +4,13 @@ import com.example.intern.common.ApiResponse;
 import com.example.intern.user.dto.UserRequest;
 import com.example.intern.user.dto.UserResponse;
 import com.example.intern.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+@PreAuthorize("hasRole('ADMIN')")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -17,7 +19,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ApiResponse<UserResponse> createUser(@RequestBody UserRequest request) {
+    public ApiResponse<UserResponse> createUser(@Valid @RequestBody UserRequest request) {
         return ApiResponse.<UserResponse>builder()
                 .result(userService.createUser(request))
                 .build();

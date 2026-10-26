@@ -6,6 +6,7 @@ import com.example.intern.doctor.dto.DoctorResponse;
 import com.example.intern.doctor.service.DoctorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,20 +17,22 @@ import java.util.List;
 public class DoctorController {
     private final DoctorService doctorService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ApiResponse<DoctorResponse> createDoctor(@Valid @RequestBody DoctorRequest request) {
         return ApiResponse.<DoctorResponse>builder().result(doctorService.createDoctor(request)).build();
     }
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
     @GetMapping
     public ApiResponse<List<DoctorResponse>> getAllDoctors() {
         return ApiResponse.<List<DoctorResponse>>builder().result(doctorService.getAllDoctors()).build();
     }
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ApiResponse<DoctorResponse> updateDoctor(@PathVariable Long id, @Valid @RequestBody DoctorRequest request) {
         return ApiResponse.<DoctorResponse>builder().result(doctorService.updateDoctor(id, request)).build();
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ApiResponse<String> deleteDoctor(@PathVariable Long id) {
         doctorService.deleteDoctor(id);

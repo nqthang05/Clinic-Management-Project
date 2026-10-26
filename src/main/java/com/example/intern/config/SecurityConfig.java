@@ -38,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login").permitAll()
 
                         // Mở tạm API tạo User (POST) để bạn tạo tài khoản ban đầu test. Sau này có thể khóa lại chỉ cho ADMIN.
-                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+//                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
 
                         // Phân quyền cơ bản (Ví dụ Admin mới được tạo thuốc)
                         // .requestMatchers(HttpMethod.POST, "/api/medicines").hasRole("ADMIN")

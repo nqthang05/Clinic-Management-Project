@@ -6,6 +6,7 @@ import com.example.intern.invoice.dto.InvoiceResponse;
 import com.example.intern.invoice.service.InvoiceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,16 +16,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InvoiceController {
     private final InvoiceService invoiceService;
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @PostMapping
     public ApiResponse<InvoiceResponse> createInvoice(@Valid @RequestBody InvoiceRequest request) {
         return ApiResponse.<InvoiceResponse>builder().result(invoiceService.createInvoice(request)).build();
     }
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @GetMapping
     public ApiResponse<List<InvoiceResponse>> getAllInvoices() {
         return ApiResponse.<List<InvoiceResponse>>builder().result(invoiceService.getAllInvoices()).build();
     }
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     @PatchMapping("/{id}/status")
     public ApiResponse<InvoiceResponse> updateInvoiceStatus(@PathVariable Long id, @RequestParam String status) {
         return ApiResponse.<InvoiceResponse>builder().result(invoiceService.updateInvoiceStatus(id, status)).build();
