@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.access.AccessDeniedException;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 @RestControllerAdvice
 @Slf4j
@@ -66,5 +67,13 @@ public class GlobalExceptionHandler {
         apiResponse.setMessage(errorCode.getMessage());
 
         return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
+    }
+    @ExceptionHandler(value = HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handlingHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
+        ApiResponse<Void> apiResponse = new ApiResponse<>();
+        apiResponse.setCode(ErrorCode.VALIDATION_ERROR.getCode()); // Dùng chung mã 1001
+        apiResponse.setMessage("Payload request không được để trống hoặc sai định dạng JSON");
+
+        return ResponseEntity.badRequest().body(apiResponse);
     }
 }
