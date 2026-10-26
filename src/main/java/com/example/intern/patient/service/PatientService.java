@@ -13,6 +13,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.example.intern.common.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 @Service
 @RequiredArgsConstructor
 public class PatientService {
@@ -24,10 +30,31 @@ public class PatientService {
         return patientMapper.toResponse(patientRepository.save(patient));
     }
 
-    public List<PatientResponse> getAllPatients() {
-        return patientRepository.findAll().stream()
+    public PageResponse<PatientResponse> getPatients(String keyword, int page, int size) {
+        // Mặc định sắp xếp theo ngày tạo mới nhất đưa lên đầu
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Page<Patient> patientPage;
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            patientPage = patientRepository.searchPatients(keyword.trim(), pageable);
+        } else {
+            patientPage = patientRepository.findAll(pageable);
+        }
+
+        // Chuyển đổi từ Entity sang DTO
+        List<PatientResponse> content = patientPage.getContent().stream()
                 .map(patientMapper::toResponse)
                 .collect(Collectors.toList());
+
+        // Đóng gói vào PageResponse
+        return PageResponse.<PatientResponse>builder()
+                .currentPage(patientPage.getNumber())
+                .totalPages(patientPage.getTotalPages())
+                .totalElements(patientPage.getTotalElements())
+                .pageSize(patientPage.getSize())
+                .content(content)
+                .build();
     }
 
     public PatientResponse getPatientById(Long id) {

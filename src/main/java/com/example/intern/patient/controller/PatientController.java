@@ -1,6 +1,7 @@
 package com.example.intern.patient.controller;
 
 import com.example.intern.common.ApiResponse;
+import com.example.intern.common.PageResponse;
 import com.example.intern.patient.dto.PatientRequest;
 import com.example.intern.patient.dto.PatientResponse;
 import com.example.intern.patient.service.PatientService;
@@ -22,8 +23,14 @@ public class PatientController {
     }
     @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
     @GetMapping
-    public ApiResponse<List<PatientResponse>> getAllPatients() {
-        return ApiResponse.<List<PatientResponse>>builder().result(patientService.getAllPatients()).build();
+    public ApiResponse<PageResponse<PatientResponse>> getPatients(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "page", defaultValue = "0") int page, // Spring mặc định trang đầu tiên là 0
+            @RequestParam(value = "size", defaultValue = "10") int size
+    ) {
+        return ApiResponse.<PageResponse<PatientResponse>>builder()
+                .result(patientService.getPatients(keyword, page, size))
+                .build();
     }
     @PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST', 'DOCTOR')")
     @GetMapping("/{id}")
